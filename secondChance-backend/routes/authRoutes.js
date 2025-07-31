@@ -86,12 +86,15 @@ router.post("/login", async (req, res, next) => {
     return res.status(400).json({ message: "Email and password are required" });
   }
   const collection = db.collection("users");
+  let temp;
   try{
-    const userResult = collection.findOne({ email: email });
+    temp = await collection.findOne({ email: email });
   } catch(e) {
     console.error("Error finding user", e);
     return res.status(500).json({ message: "Internal Server Error" });
   }
+  const userResult = temp;
+  temp = null;
   if (!userResult) {
     return res.status(400).json({ message: "Invalid email or password" });
   }
