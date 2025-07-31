@@ -71,4 +71,49 @@ router.post("/register", async (req, res, next) => {
   }
   return res.status(201).json({ message: "User registered successfully" });
 });
+router.post("/login", async (req, res, next) => {
+  try {
+    db = await connectToDatabase();
+  }
+  catch (e) {
+    console.error("Failed to connect to DB", e);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+  const {email, password} = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+  const collection = db.collection("users");
+  try{
+    const userResult = collection.findOne({ email: email });
+  } catch(e) {
+    console.error("Error finding user", e);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+  if (!userResult) {
+    return res.status(400).json({ message: "Invalid email or password" });
+  }
+  // Verify the password
+  const isPasswordValid = await bcrypt.compare(password, userResult.hashedPassword);
+  if (!isPasswordValid) {
+    return res.status(400).json({ message: "Invalid email or password" });
+  }
+  // Create JWT token
+  const jwtPayload = {
+    user: {
+      id: userResult._id,
+    },
+  };
+  const authToken = jsonwebtoken.sign(
+    jwtPayload,
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+  res.cookie("authToken", authToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+  });
+  return res.status(200).json({ message: "Login successful" });
+})
 module.exports = router;
