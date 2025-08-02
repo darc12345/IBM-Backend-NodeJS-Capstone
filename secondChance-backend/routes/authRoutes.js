@@ -18,9 +18,9 @@ router.post('/register', async (req, res) => {
   const { email, password, firstName, lastName } = req.body
   // check if the credential already exists
   try {
-    const prior_account = await collection.findOne({ email })
-    console.log('prior_account:', prior_account)
-    if (prior_account) {
+    const priorAccount = await collection.findOne({ email })
+    console.log('prior_account:', priorAccount)
+    if (priorAccount) {
       return res.status(400).json({ message: 'User already exists' })
     }
   } catch (e) {
@@ -73,6 +73,7 @@ router.post('/register', async (req, res) => {
   return res.status(201).json({ message: 'User registered successfully' })
 })
 router.post('/login', async (req, res) => {
+  let temp = null
   try {
     temp = await connectToDatabase()
   } catch (e) {
@@ -80,12 +81,12 @@ router.post('/login', async (req, res) => {
     return res.status(500).json({ message: 'Internal Server Error' })
   }
   const db = temp
+  temp = null
   const { email, password } = req.body
   if (!email || !password) {
     return res.status(400).json({ message: 'Email and password are required' })
   }
   const collection = db.collection('users')
-  let temp
   try {
     temp = await collection.findOne({ email })
   } catch (e) {
