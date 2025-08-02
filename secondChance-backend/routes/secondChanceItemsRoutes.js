@@ -1,7 +1,5 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const router = express.Router();
 const connectToDatabase = require('../models/db');
 const logger = require('../logger');
@@ -75,7 +73,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // Update and existing item
-router.put('/:id', async(req, res,next) => {
+router.put('/:id', async(req, res) => {
     try {
         const db = await connectToDatabase();
         const collection = db.collection("secondChanceItems");
@@ -85,6 +83,7 @@ router.put('/:id', async(req, res,next) => {
             return res.status(404).json({ message: 'Item not found' });
         }
         const updatedItem = req.body;
+        var secondChanceItem = {};
         secondChanceItem.category = req.body.category;
         secondChanceItem.condition = req.body.condition;
         secondChanceItem.age_days = req.body.age_days;
@@ -95,19 +94,19 @@ router.put('/:id', async(req, res,next) => {
         const updatePreloveItem = await collection.findOneAndUpdate(
             { id: id},
             { $set: updatedItem },
-            {ReturnDocument: AFTER }
+            {ReturnDocument: ReturnDocument.AFTER }
         )
         if (!updatePreloveItem) {
             return res.status(404).json({ message: 'Item not found' });
         }
         return res.status(200).json(updatePreloveItem.value);
     } catch (e) {
-        next(e);
+        logger.error('Error updating item', e);
     }
 });
 
 // Delete an existing item
-router.delete('/:id', async(req, res,next) => {
+router.delete('/:id', async(req, res) => {
     try {
         const db = await connectToDatabase();
         const collection = db.collection("secondChanceItems");
@@ -118,7 +117,7 @@ router.delete('/:id', async(req, res,next) => {
         }
         res.status(204).send();
     } catch (e) {
-        next(e);
+        logger.error('Error deleting item', e);
     }
 });
 
